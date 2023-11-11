@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 )
 
 // TODO : IMPLEMENT RESP PROROCOL :
@@ -109,4 +110,32 @@ func Decode(data []byte) (interface{}, error) {
 
 	return value, err
 
+}
+
+func DecodeArrayString(data []byte) ([]string, error) {
+
+	value, err := Decode(data)
+
+	if err != nil {
+		return nil, err
+	}
+	ts := value.([]interface{})
+	tokens := make([]string, len(ts))
+	for i := range tokens {
+		tokens[i] = ts[i].(string)
+	}
+
+	return tokens, nil
+}
+
+func Encode(value interface{}, isSimple bool) []byte {
+	switch v := value.(type) {
+	case string:
+		if isSimple {
+			return []byte(fmt.Sprintf("+%s\r\n", v))
+		} else {
+			return []byte(fmt.Sprintf("$%d\r\n%s\r\n", len(v), v))
+		}
+	}
+	return []byte{}
 }

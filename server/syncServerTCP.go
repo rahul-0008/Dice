@@ -1,15 +1,18 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/DiceDB/Dice/config"
+	"github.com/DiceDB/Dice/core"
 )
 
-func readCommand(c net.Conn) (string, error) {
+func readCommand(c net.Conn) (*core.Rediscmd, error) {
 	// TODO: Max read in one shot is 512 bytes
 	// To allow input > 512 bytes, then repeated read until
 	// we get EOF or designated delimiter
@@ -18,17 +21,31 @@ func readCommand(c net.Conn) (string, error) {
 	n, err := c.Read(byt[:])
 
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	tokens, err := core.DecodeArrayString(byt[:n])
+	if err != nil {
+		return nil, err
 	}
 
-	return string(byt[:n]), nil
+	return &core.Rediscmd{
+		Cmd:  strings.ToUpper(tokens[0]),
+		Args: tokens[1:],
+	}, nil
 }
 
-func respond(cmd string, c net.Conn) error {
-	if _, err := c.Write([]byte(cmd)); err != nil {
-		return err
+func respondError(err error, c net.Conn) {
+
+	b := []byte(fmt.Sprintf("-%s\r\n", err))
+	c.Write(b)
+}
+
+func respond(cmd *core.Rediscmd, c net.Conn) {
+	err := core.EvaluateandRespond(cmd, c)
+
+	if err != nil {
+		respondError(err, c)
 	}
-	return nil
 }
 
 func RunSyncTCPServer() {
@@ -66,12 +83,7 @@ func RunSyncTCPServer() {
 				}
 				log.Println("err", err)
 			}
-
-			log.Println("Command :", cmd)
-			writeError := respond(cmd, c)
-			if writeError != nil {
-				log.Println("Write error", writeError)
-			}
+			respond(cmd, c)
 		}
 	}
 }
