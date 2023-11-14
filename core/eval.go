@@ -2,11 +2,11 @@ package core
 
 import (
 	"errors"
+	"io"
 	"log"
-	"net"
 )
 
-func evalPing(args []string, c net.Conn) error {
+func evalPing(args []string, c io.ReadWriter) error {
 	var b []byte
 
 	if len(args) >= 2 {
@@ -25,7 +25,7 @@ func evalPing(args []string, c net.Conn) error {
 	return err
 }
 
-func EvaluateandRespond(cmd *Rediscmd, c net.Conn) error {
+func EvaluateandRespond(cmd *Rediscmd, c io.ReadWriter) error {
 	log.Println(cmd.Cmd)
 
 	switch cmd.Cmd {

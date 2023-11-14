@@ -12,7 +12,7 @@ import (
 	"github.com/DiceDB/Dice/core"
 )
 
-func readCommand(c net.Conn) (*core.Rediscmd, error) {
+func readCommand(c io.ReadWriter) (*core.Rediscmd, error) {
 	// TODO: Max read in one shot is 512 bytes
 	// To allow input > 512 bytes, then repeated read until
 	// we get EOF or designated delimiter
@@ -34,13 +34,13 @@ func readCommand(c net.Conn) (*core.Rediscmd, error) {
 	}, nil
 }
 
-func respondError(err error, c net.Conn) {
+func respondError(err error, c io.ReadWriter) {
 
 	b := []byte(fmt.Sprintf("-%s\r\n", err))
 	c.Write(b)
 }
 
-func respond(cmd *core.Rediscmd, c net.Conn) {
+func respond(cmd *core.Rediscmd, c io.ReadWriter) {
 	err := core.EvaluateandRespond(cmd, c)
 
 	if err != nil {
