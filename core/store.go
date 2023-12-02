@@ -3,6 +3,8 @@ package core
 import (
 	"log"
 	"time"
+
+	"github.com/DiceDB/Dice/config"
 )
 
 var store map[string]*Obj
@@ -30,6 +32,9 @@ func NewObj(value interface{}, durationMs int64) *Obj {
 }
 
 func Put(K string, obj *Obj) {
+	if len(store) > config.KeysLimit {
+		evict()
+	}
 	store[K] = obj
 }
 
