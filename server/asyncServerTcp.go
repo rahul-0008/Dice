@@ -4,12 +4,15 @@ import (
 	"log"
 	"net"
 	"syscall"
+	"time"
 
 	"github.com/DiceDB/Dice/config"
 	"github.com/DiceDB/Dice/core"
 )
 
 var con_clients = 0
+var cronFrequency time.Duration = 1 * time.Second
+var lastExecuted time.Time = time.Now()
 
 func RunAsyncTCPServer() error {
 	log.Println("Starting a Asynchronous Server on", config.Host, config.Port)
@@ -66,6 +69,11 @@ func RunAsyncTCPServer() error {
 	}
 
 	for {
+
+		if time.Now().After(lastExecuted.Add(cronFrequency)) {
+			core.DeleteExpiredKeys()
+			lastExecuted = time.Now()
+		}
 		// see and wait for events to happen in the kernel buffer and user space
 		// this is a blocking call and to timeout with a specific time fill in 4th argument.
 

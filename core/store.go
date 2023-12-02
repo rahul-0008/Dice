@@ -1,0 +1,54 @@
+package core
+
+import (
+	"log"
+	"time"
+)
+
+var store map[string]*Obj
+
+type Obj struct {
+	Value     interface{}
+	ExpiresAt int64
+}
+
+func init() {
+	store = make(map[string]*Obj)
+}
+
+func NewObj(value interface{}, durationMs int64) *Obj {
+	log.Println("Time to live given ", durationMs)
+	var expiresAt int64 = -1
+	if durationMs > 0 {
+		expiresAt = time.Now().UnixMilli() + durationMs
+	}
+
+	return &Obj{
+		Value:     value,
+		ExpiresAt: expiresAt,
+	}
+}
+
+func Put(K string, obj *Obj) {
+	store[K] = obj
+}
+
+func Get(K string) *Obj {
+	v := store[K]
+	if v != nil {
+		if v.ExpiresAt != -1 && v.ExpiresAt <= time.Now().UnixMilli() {
+			delete(store, K)
+			return nil
+		}
+	}
+	return v
+}
+
+func Del(K string) bool {
+	if _, ok := store[K]; ok {
+		delete(store, K)
+		return true
+	}
+	return false
+
+}
