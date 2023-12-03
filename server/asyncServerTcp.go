@@ -112,14 +112,14 @@ func RunAsyncTCPServer() error {
 				// this is one of the connected clients
 
 				comm := core.FDComm{Fd: tempFD}
-				cmd, err := readCommand(comm)
+				cmds, err := readCommands(comm)
 				if err != nil {
 					syscall.Close(comm.Fd)
 					con_clients -= 1
 					// log.Println("Total clients connected now : ", con_clients)
 					continue
 				}
-				respond(cmd, comm)
+				respond(cmds, comm)
 
 			}
 

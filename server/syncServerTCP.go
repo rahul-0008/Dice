@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -12,7 +11,15 @@ import (
 	"github.com/DiceDB/Dice/core"
 )
 
-func readCommand(c io.ReadWriter) (*core.Rediscmd, error) {
+func convertToArrayString(ai []interface{}) ([]string, error) {
+	as := make([]string, len(ai))
+	for i := range ai {
+		as[i] = ai[i].(string)
+	}
+	return as, nil
+}
+
+func readCommands(c io.ReadWriter) (core.RedisCmds, error) {
 	// TODO: Max read in one shot is 512 bytes
 	// To allow input > 512 bytes, then repeated read until
 	// we get EOF or designated delimiter
@@ -23,29 +30,28 @@ func readCommand(c io.ReadWriter) (*core.Rediscmd, error) {
 	if err != nil {
 		return nil, err
 	}
-	tokens, err := core.DecodeArrayString(byt[:n])
+	values, err := core.Decode(byt[:n])
 	if err != nil {
 		return nil, err
 	}
 
-	return &core.Rediscmd{
-		Cmd:  strings.ToUpper(tokens[0]),
-		Args: tokens[1:],
-	}, nil
-}
+	var cmds []*core.Rediscmd = make([]*core.Rediscmd, 0)
+	for _, value := range values {
+		tokens, err := convertToArrayString(value.([]interface{}))
+		if err != nil {
+			return nil, err
+		}
 
-func respondError(err error, c io.ReadWriter) {
-
-	b := []byte(fmt.Sprintf("-%s\r\n", err))
-	c.Write(b)
-}
-
-func respond(cmd *core.Rediscmd, c io.ReadWriter) {
-	err := core.EvaluateandRespond(cmd, c)
-
-	if err != nil {
-		respondError(err, c)
+		cmds = append(cmds, &core.Rediscmd{
+			Cmd:  strings.ToUpper(tokens[0]),
+			Args: tokens[1:],
+		})
 	}
+	return cmds, nil
+}
+
+func respond(cmds core.RedisCmds, c io.ReadWriter) {
+	core.EvaluateandRespond(cmds, c)
 }
 
 func RunSyncTCPServer() {
@@ -72,7 +78,7 @@ func RunSyncTCPServer() {
 		for {
 			// over the socket, continously read the command and print out
 
-			cmd, err := readCommand(c)
+			cmds, err := readCommands(c)
 
 			if err != nil {
 				c.Close()
@@ -83,7 +89,7 @@ func RunSyncTCPServer() {
 				}
 				log.Println("err", err)
 			}
-			respond(cmd, c)
+			respond(cmds, c)
 		}
 	}
 }

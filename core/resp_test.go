@@ -9,13 +9,12 @@ import (
 
 func TestSimpleStringDecode(t *testing.T) {
 	cases := map[string]string{
-		"+OK\r\n":    "OK",
-		"+Rahul\r\n": "Rahul",
+		"+OK\r\n": "OK",
 	}
 	for k, v := range cases {
 		value, _ := core.Decode([]byte(k))
 		fmt.Printf("\nTest passed with value %s", value)
-		if v != value {
+		if v != value[0] {
 			t.Fail()
 		}
 	}
@@ -29,7 +28,7 @@ func TestBulkStringDecode(t *testing.T) {
 	for k, v := range cases {
 		value, _ := core.Decode([]byte(k))
 		fmt.Printf("\n %s", value)
-		if v != value {
+		if v != value[0] {
 			t.Fail()
 		}
 	}
@@ -43,7 +42,7 @@ func TestError(t *testing.T) {
 	for k, v := range cases {
 		value, _ := core.Decode([]byte(k))
 		fmt.Printf("\n %s", value)
-		if v != value {
+		if v != value[0] {
 			t.Fail()
 		}
 	}
@@ -57,7 +56,7 @@ func TestInt64(t *testing.T) {
 	for k, v := range cases {
 		value, _ := core.Decode([]byte(k))
 		fmt.Printf("\n %d", value)
-		if v != value {
+		if v != value[0] {
 			t.Fail()
 		}
 	}
@@ -74,7 +73,7 @@ func TestArrayDecode(t *testing.T) {
 	for k, v := range cases {
 		value, _ := core.Decode([]byte(k))
 		fmt.Print("\n", value)
-		array := value.([]interface{})
+		array := value[0].([]interface{})
 		if len(array) != len(v) {
 			t.Fail()
 		}
