@@ -152,6 +152,10 @@ func evalExpire(args []string) []byte {
 	// 1 if the timeout was set.
 	return RESP_ONE
 }
+func evalBGREWRITEAOF(args []string) []byte {
+	DumpAllAOF()
+	return RESP_OK
+}
 
 func EvaluateandRespond(cmds RedisCmds, c io.ReadWriter) {
 	var response []byte
@@ -173,6 +177,8 @@ func EvaluateandRespond(cmds RedisCmds, c io.ReadWriter) {
 			buf.Write(evalDEL(cmd.Args))
 		case "EXPIRE":
 			buf.Write(evalExpire(cmd.Args))
+		case "BGREWRITEAOF":
+			buf.Write(evalBGREWRITEAOF(cmd.Args))
 		default:
 			buf.Write(evalPing(cmd.Args))
 
