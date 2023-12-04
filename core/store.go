@@ -9,16 +9,11 @@ import (
 
 var store map[string]*Obj
 
-type Obj struct {
-	Value     interface{}
-	ExpiresAt int64
-}
-
 func init() {
 	store = make(map[string]*Obj)
 }
 
-func NewObj(value interface{}, durationMs int64) *Obj {
+func NewObj(value interface{}, durationMs int64, oType uint8, oEnc uint8) *Obj {
 	log.Println("Time to live given ", durationMs)
 	var expiresAt int64 = -1
 	if durationMs > 0 {
@@ -26,8 +21,9 @@ func NewObj(value interface{}, durationMs int64) *Obj {
 	}
 
 	return &Obj{
-		Value:     value,
-		ExpiresAt: expiresAt,
+		Value:        value,
+		ExpiresAt:    expiresAt,
+		TypeEncoding: oType | oEnc,
 	}
 }
 
